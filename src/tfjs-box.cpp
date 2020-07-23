@@ -59,16 +59,11 @@ NAN_METHOD(adjust_hue)
   for(i = 0; i < 2; ++i) if(Has(color, i).FromJust()) hue.push_back(Nan::Get(color, i).ToLocalChecked()->NumberValue(context).FromJust());
   
   cv::Mat img(h, w, CV_32FC3, (*data));
-  print(img);
   
   cv::cvtColor(img, img, cv::COLOR_RGB2HSV);
   
   cv::Mat hsv[3];
   cv::split(img, hsv);
-  
-  print(hsv[0]);
-  
-  for(i = 0; i < hue.size(); ++i) std::cout << hue[i] << std::endl;
   
   for(i = 0; i < hue.size(); ++i) hsv[i] = cv::Scalar::all(hue[i]);
   
