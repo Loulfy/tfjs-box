@@ -1,0 +1,13 @@
+{
+  "name": "predicator",
+  "version": "1.0.0",
+  "description": "Native module tensorflow toolbox",
+  "dependencies": {
+    "bindings": "^1.5.0",
+    "cmake-js": "^6.1.0",
+    "nan": "^2.14.1"
+  },
+  "scripts": {
+    "install": "cmake-js compile"
+  }
+}
