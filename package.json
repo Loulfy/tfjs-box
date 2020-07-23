@@ -1,5 +1,5 @@
 {
-  "name": "predicator",
+  "name": "tfjs-box",
   "version": "1.0.0",
   "description": "Native module tensorflow toolbox",
   "dependencies": {
