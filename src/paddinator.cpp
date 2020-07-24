@@ -131,25 +131,18 @@ void Paddinator::Restore(const Nan::FunctionCallbackInfo<v8::Value>& info)
   
   auto img = pad->restore(*data);
   
-  /*std::vector<uchar> big(img.size().area()*3*sizeof(float));;
-  for(int x = 0; x < img.size().height; x++)
-  {
-  	cv::Mat row = img.row(x);
-  	std::memcpy(big.data()+x*img.size().width*3*sizeof(float), row.data, img.size().width*3*sizeof(float));
-  }*/
-  
   int length = img.size().area()*3;
-  v8::Local<v8::ArrayBuffer> buf = v8::ArrayBuffer::New(info.GetIsolate(), length*img.size().area()*3);
+  v8::Local<v8::ArrayBuffer> buf = v8::ArrayBuffer::New(info.GetIsolate(), length*sizeof(float));
+  
+  //std::memcpy(buf->GetContents().Data(), img.data, length*sizeof(float));
   
   int w = img.size().width;
   int h = img.size().height;
   for(int i = 0; i < h; ++i)
   {
-  	cv::Mat row = img.row(i);
-  	std::memcpy((uchar*)buf->GetContents().Data()+i*w*3*sizeof(float), row.data, w*3*sizeof(float));
+    cv::Mat row = img.row(i);
+    std::memcpy((uchar*)buf->GetContents().Data()+i*w*3*sizeof(float), row.data, w*3*sizeof(float));
   }
-  
-  //std::memcpy(buf->GetContents().Data(), big.data(), length*sizeof(float));
   
   v8::Local<v8::Float32Array> array = v8::Float32Array::New(buf, 0, length);
   
