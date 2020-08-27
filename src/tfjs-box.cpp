@@ -37,7 +37,7 @@ void print(cv::Mat& mat)
   std::cout << mat.size() << " = " << type2str(mat.type()) << std::endl;
 }
 
-NAN_METHOD(adjust_hue)
+NAN_METHOD(rotate_hue)
 {
   if(!info[0]->IsFloat32Array()) return Nan::ThrowTypeError("Argument 0 must be Float32Array");
   if(!info[1]->IsArray()) return Nan::ThrowTypeError("Argument 1 must be [height, width]");
@@ -106,7 +106,69 @@ NAN_METHOD(adjust_hue)
   info.GetReturnValue().SetUndefined();
 }
 
+NAN_METHOD(adjust_hue)
+{
+  // TODO : remove duplication
+  if(!info[0]->IsFloat32Array()) return Nan::ThrowTypeError("Argument 0 must be Float32Array");
+  if(!info[1]->IsArray()) return Nan::ThrowTypeError("Argument 1 must be [height, width]");
+  if(!info[2]->IsArray()) return Nan::ThrowTypeError("Argument 2 must be [h, s, v]");
+  TypedArrayContents<float> data(info[0]);
+  v8::Local<v8::Context> context = info.GetIsolate()->GetCurrentContext();
+  
+  double wt = 0, ht = 0;
+  v8::Local<v8::Array> shape = v8::Local<v8::Array>::Cast(info[1]);
+  if(Has(shape, 0).FromJust() && Has(shape, 1).FromJust())
+  {
+    ht = Nan::Get(shape, 0).ToLocalChecked()->NumberValue(context).FromJust();
+    wt = Nan::Get(shape, 1).ToLocalChecked()->NumberValue(context).FromJust();
+  }
+  
+  size_t i;
+  std::vector<float> target;
+  v8::Local<v8::Array> color = v8::Local<v8::Array>::Cast(info[2]);
+  for(i = 0; i < 3; ++i) if(Has(color, i).FromJust()) target.push_back(Nan::Get(color, i).ToLocalChecked()->NumberValue(context).FromJust());
+  
+  if(target.empty())
+  {
+    info.GetReturnValue().SetUndefined();
+    return;
+  }
+  
+  cv::Mat img(ht, wt, CV_32FC3, (*data));
+  
+  cv::cvtColor(img, img, cv::COLOR_RGB2HSV);
+  
+  float h, s, v;
+  for (int j = 0; j < img.rows; ++j)
+  {
+    for (int i = 0; i < img.cols; ++i)
+    {      
+      h = img.at<cv::Vec3f>(j, i)[0] + target[0];
+      if(h < 0) h+= 360;
+      if(h >= 360) h-= 360;
+      img.at<cv::Vec3f>(j, i)[0] = h;
+      
+      if(target.size() > 1)
+      {
+        s = img.at<cv::Vec3f>(j, i)[1] + target[1];
+        img.at<cv::Vec3f>(j, i)[1] = std::min(std::max(s, 0.f), 1.f);
+      }
+      
+      if(target.size() > 2)
+      {
+        v = img.at<cv::Vec3f>(j, i)[2] + target[2];
+        img.at<cv::Vec3f>(j, i)[2] = std::min(std::max(v, 0.f), 255.f);
+      }
+    }
+  }
+  
+  cv::cvtColor(img, img, cv::COLOR_HSV2RGB);
+
+  info.GetReturnValue().SetUndefined();
+}
+
 NAN_MODULE_INIT(Init) {
+  NAN_EXPORT(target, rotate_hue);
   NAN_EXPORT(target, adjust_hue);
   Paddinator::Init(target);
 }
